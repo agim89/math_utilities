@@ -16,8 +16,7 @@ class MyLibConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        # Pass PROJECT_VERSION via CMake cache variable
-        cmake.configure(variables={"PROJECT_VERSION": self.version})
+        cmake.configure()
         cmake.build()
         cmake.test()
 
