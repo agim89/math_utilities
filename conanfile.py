@@ -5,11 +5,15 @@ import os
 
 class MyLibConan(ConanFile):
     name = "mylib"
-    version = "0.0.0"  # Default; overridden by CI via --version flag
     settings = "os", "arch", "compiler", "build_type"
     exports_sources = "CMakeLists.txt", "src/*", "include/*", "tests/*", "cmake/*"
     generators = "CMakeDeps", "CMakeToolchain"
     requires = "gtest/1.14.0"
+
+    def set_version(self):
+        # Allow version to be set via --version CLI flag or CONAN_VERSION env var
+        if not self.version:
+            self.version = os.getenv("CONAN_VERSION", "0.0.0")
 
     def layout(self):
         cmake_layout(self)
