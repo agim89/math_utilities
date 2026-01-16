@@ -1,9 +1,13 @@
-name: Verify Label
+name: Build RC packages
+
 on:
   pull_request:
     types: [labeled]
 
 jobs:
-  verify:
-    if: contains(github.event.label.name, 'verify')
-    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
+  rc:
+    if: github.event.label.name == 'publish'
+    uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
+    with:
+      version: 1.2.0-dev-
+      remote: conan-rc
