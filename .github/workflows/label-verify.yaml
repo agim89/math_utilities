@@ -1,3 +1,4 @@
+name: Verify label
 on:
   pull_request:
     types: [labeled]
