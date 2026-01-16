@@ -43,6 +43,9 @@ jobs:
   create-release:
     needs: check-publish-label
     if: needs.check-publish-label.outputs.should_release == 'true'
+    permissions:
+      contents: write
+      packages: write
     uses: agim89/shared-workflows/.github/workflows/release.yml@main
     with:
       version: 1.2.0
