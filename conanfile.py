@@ -16,7 +16,7 @@ class MyLibConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure(variables={"PROJECT_VERSION": self.version})
+        cmake.configure(cli_args=[f"-DPROJECT_VERSION={self.version}"])
         cmake.build()
         # Only run tests in build, not in package
         cmake.test()
