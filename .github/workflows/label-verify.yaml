@@ -1,5 +1,3 @@
-name: Build RC Packages
-
 name: Verify Integration Tests
 
 on:
