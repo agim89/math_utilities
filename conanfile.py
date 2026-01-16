@@ -1,11 +1,13 @@
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.files import copy
+import os
 
 class MyLibConan(ConanFile):
     name = "mylib"
-    version = None  # injected by CI
+    version = "0.0.0"  # Default; overridden by CI via --version flag
     settings = "os", "arch", "compiler", "build_type"
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "tests/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "tests/*", "cmake/*"
     generators = "CMakeDeps", "CMakeToolchain"
     requires = "gtest/1.14.0"
 
@@ -14,8 +16,9 @@ class MyLibConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure()
+        cmake.configure(variables={"PROJECT_VERSION": self.version})
         cmake.build()
+        # Only run tests in build, not in package
         cmake.test()
 
     def package(self):
@@ -24,3 +27,4 @@ class MyLibConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["mylib"]
+        self.cpp_info.set_property("cmake_find_mode", "config")

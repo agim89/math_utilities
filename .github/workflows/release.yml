@@ -1,12 +1,49 @@
-name: Final release
+name: Final Release
 
 on:
   push:
     branches: [main]
 
 jobs:
-  release:
-    uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
+  # Only trigger if the merged PR had the 'publish' label
+  check-publish-label:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get merged PR and check for publish label
+        id: check
+        run: |
+          # Get the commit message of the merge commit
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          
+          # Extract PR number from commit message (GitHub creates: "Merge pull request #123 from...")
+          if [[ $COMMIT_MSG =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
+            PR_NUMBER="${BASH_REMATCH[1]}"
+            echo "Merged PR: #${PR_NUMBER}"
+            
+            # Check if PR had 'publish' label
+            LABELS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}" \
+              | jq -r '.labels[].name')
+            
+            if echo "$LABELS" | grep -q "publish"; then
+              echo "should_release=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_release=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-release:
+    needs: check-publish-label
+    if: needs.check-publish-label.outputs.should_release == 'true'
+    uses: agim89/shared-workflows/.github/workflows/release.yml@main
     with:
       version: 1.2.0
-      remote: conan-stable
+    secrets: inherit

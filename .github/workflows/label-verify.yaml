@@ -1,13 +1,16 @@
 name: Build RC packages
 
+name: Verify Integration Tests
+
 on:
   pull_request:
     types: [labeled]
 
 jobs:
-  rc:
-    if: github.event.label.name == 'publish'
-    uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
+  consumer-integration:
+    if: github.event.label.name == 'verify'
+    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
     with:
-      version: 1.2.0-dev-
+      version: 1.2.0
       remote: conan-rc
+    secrets: inherit

@@ -1,0 +1,42 @@
+name: Setup Branch Protection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-protection:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      administration: write
+    
+    steps:
+      - name: Configure branch protection for main
+        run: |
+          gh api repos/${{ github.repository }}/branches/main/protection \
+            --input - <<EOF
+          {
+            "required_status_checks": {
+              "strict": true,
+              "contexts": ["build"]
+            },
+            "enforce_admins": true,
+            "required_pull_request_reviews": {
+              "dismiss_stale_reviews": true,
+              "require_code_owner_reviews": false
+            },
+            "restrictions": null,
+            "allow_force_pushes": false,
+            "allow_deletions": false,
+            "required_conversation_resolution": false
+          }
+          EOF
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify branch protection
+        run: |
+          gh api repos/${{ github.repository }}/branches/main/protection \
+            --jq '{strict_checks: .required_status_checks.strict, enforce_admins: .enforce_admins, allow_force_pushes: .allow_force_pushes}'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

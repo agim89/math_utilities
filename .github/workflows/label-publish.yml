@@ -1,13 +1,23 @@
-name: Build RC Packages
+name: Build & Publish RC Packages
 
 on:
   pull_request:
     types: [labeled]
 
 jobs:
-  rc:
+  rc-build:
     if: github.event.label.name == 'publish'
     uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
     with:
       version: 1.2.0-dev-
       remote: conan-rc
+      is_rc: true
+
+  consumer-verify:
+    needs: rc-build
+    if: github.event.label.name == 'publish'
+    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
+    with:
+      version: 1.2.0-dev-${{ github.event.pull_request.head.sha }}
+      remote: conan-rc
+    secrets: inherit
