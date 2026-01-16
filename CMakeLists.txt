@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 # Allow version to be passed via command line or default to 0.0.0
-if(NOT PROJECT_VERSION)
-    set(PROJECT_VERSION "0.0.0")
-endif()
+set(PROJECT_VERSION "0.0.0" CACHE STRING "Project version")
 
 project(mylib VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
