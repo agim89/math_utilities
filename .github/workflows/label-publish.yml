@@ -1,4 +1,4 @@
-name: Build & Publish RCPackages
+name: Build & Publish RC Packages
 
 on:
   pull_request:
