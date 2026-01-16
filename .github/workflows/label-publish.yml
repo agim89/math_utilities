@@ -12,6 +12,7 @@ jobs:
       version: 1.2.0-dev-
       remote: conan-rc
       is_rc: true
+    secrets: inherit
 
   consumer-verify:
     needs: rc-build
