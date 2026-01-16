@@ -1,0 +1,10 @@
+Triggered from main repo:
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  verify:
+    if: contains(github.event.label.name, 'verify')
+    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main

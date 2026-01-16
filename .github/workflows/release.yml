@@ -1,0 +1,12 @@
+name: Final release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
+    with:
+      version: 1.2.0
+      remote: conan-stable

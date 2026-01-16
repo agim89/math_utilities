@@ -1,0 +1,7 @@
+name: PR checks
+on:
+  pull_request:
+
+jobs:
+  verify:
+    uses: agim89/shared-workflows/.github/workflows/build-test.yml@main
