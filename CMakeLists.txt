@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(mylib VERSION 1.2.0 LANGUAGES CXX)
+project(mylib LANGUAGES CXX)
 
 add_library(mylib src/sum.cpp)
 target_include_directories(mylib
