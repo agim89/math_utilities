@@ -5,7 +5,13 @@ if(NOT DEFINED PROJECT_VERSION)
     set(PROJECT_VERSION "0.0.0")
 endif()
 
-project(mylib VERSION ${PROJECT_VERSION} LANGUAGES CXX)
+# Extract numeric version for CMake project() - it only accepts X.Y.Z format
+string(REGEX MATCH "^([0-9]+\\.[0-9]+\\.[0-9]+)" NUMERIC_VERSION "${PROJECT_VERSION}")
+if(NOT NUMERIC_VERSION)
+    set(NUMERIC_VERSION "0.0.0")
+endif()
+
+project(mylib VERSION ${NUMERIC_VERSION} LANGUAGES CXX)
 
 add_library(mylib src/sum.cpp)
 target_include_directories(mylib
