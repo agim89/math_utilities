@@ -19,6 +19,6 @@ jobs:
     if: github.event.label.name == 'publish'
     uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
     with:
-      version: 1.2.0-dev-${{ github.event.pull_request.head.sha }}
+      version: 1.2.0-dev-
       remote: conan-rc
     secrets: inherit
