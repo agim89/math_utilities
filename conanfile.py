@@ -8,7 +8,7 @@ class MyLibConan(ConanFile):
     version = "0.0.0"  # Default; overridden by CI via --version flag
     settings = "os", "arch", "compiler", "build_type"
     exports_sources = "CMakeLists.txt", "src/*", "include/*", "tests/*", "cmake/*"
-    generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeDeps", "CMakeToolchain", "CMakePresets"
     requires = "gtest/1.14.0"
 
     def layout(self):
