@@ -1,2 +1,4 @@
 **/*.md
 !README.md
+!Release-Notes/Release-*.md
+!Release-Notes/unreleased.md
