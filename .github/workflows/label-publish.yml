@@ -41,11 +41,11 @@ jobs:
       git_sha: ${{ needs.get-sha.outputs.short_sha }}
     secrets: inherit
 
-  release:
-    needs: [consumer-verify, get-sha]
-    if: github.event.label.name == 'publish'
-    uses: agim89/shared-workflows/.github/workflows/release.yml@main
-    with:
-      version: 1.2.0
-      rc_version: ${{ needs.get-sha.outputs.rc_version }}
-    secrets: inherit
+  # release:
+  #   needs: [consumer-verify, get-sha]
+  #   if: github.event.label.name == 'publish'
+  #   uses: agim89/shared-workflows/.github/workflows/release.yml@main
+  #   with:
+  #     version: 1.2.0
+  #     rc_version: ${{ needs.get-sha.outputs.rc_version }}
+  #   secrets: inherit
