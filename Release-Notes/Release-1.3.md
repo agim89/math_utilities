@@ -1,5 +1,10 @@
 ## 1.3.0
 
+Was updated
+
+
+## 1.3.0
+
 Fix Release Notes feature
 
 
