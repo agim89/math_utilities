@@ -14,19 +14,22 @@ jobs:
     outputs:
       short_sha: ${{ steps.sha.outputs.short_sha }}
       rc_version: ${{ steps.rc_version.outputs.rc_version }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+      - id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
       - id: sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - id: rc_version
-        run: echo "rc_version=1.2.0-dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "rc_version=$(cat VERSION)-dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
   rc-build:
     needs: get-sha
     if: github.event.label.name == 'publish'
     uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
     with:
-      version: 1.2.0-dev-
+      version: ${{ needs.get-sha.outputs.version }}-dev-
       remote: conan-rc
       is_rc: true
     secrets: inherit
@@ -36,7 +39,7 @@ jobs:
     if: github.event.label.name == 'publish'
     uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
     with:
-      version: 1.2.0-dev-
+      version: ${{ needs.get-sha.outputs.version }}-dev-
       remote: conan-rc
       git_sha: ${{ needs.get-sha.outputs.short_sha }}
     secrets: inherit

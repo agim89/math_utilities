@@ -46,7 +46,13 @@ jobs:
     permissions:
       contents: write
       packages: write
-    uses: agim89/shared-workflows/.github/workflows/release.yml@main
-    with:
-      version: 1.2.0
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+      
+      - uses: agim89/shared-workflows/.github/workflows/release.yml@main
+        with:
+          version: ${{ steps.version.outputs.version }}
+        secrets: inherit
