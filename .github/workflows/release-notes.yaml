@@ -1,0 +1,80 @@
+name: Release Notes
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  release-notes-on-merge:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Dependencies
+        run: pip install bump2version
+
+      # 🔹 NEW: Determine release type from PR labels
+      - name: Determine release type
+        id: release_type
+        run: |
+          LABELS='${{ toJson(github.event.pull_request.labels) }}'
+
+          if echo "$LABELS" | grep -q "release:major"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+          elif echo "$LABELS" | grep -q "release:minor"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Release new version
+        env:
+          RELEASE_LOGS_FOLDER: Release-Notes
+          RELEASE_TYPE: ${{ steps.release_type.outputs.type }}
+        run: |
+          set -e
+
+          RELEASE_FILE_NAME_PREFIX="Release"
+
+          if [ ! -s "$RELEASE_LOGS_FOLDER/unreleased.md" ]; then
+            echo "unreleased.md is empty. Skipping release."
+            exit 0
+          fi
+
+          echo "Releasing a $RELEASE_TYPE version"
+          bump2version "$RELEASE_TYPE"
+
+          VERSION=$(awk -F\" '/=.*/ {print $2}' "$RELEASE_LOGS_FOLDER/__version__.py")
+          MINOR_VERSION="${VERSION%.*}"
+
+          TMP_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md.tmp"
+          FINAL_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md"
+
+          echo -e "## $VERSION\n" > "$TMP_FILE"
+          cat "$RELEASE_LOGS_FOLDER/unreleased.md" >> "$TMP_FILE"
+          echo -e "\n" >> "$TMP_FILE"
+          cat "$FINAL_FILE" >> "$TMP_FILE" || true
+          mv "$TMP_FILE" "$FINAL_FILE"
+
+          : > "$RELEASE_LOGS_FOLDER/unreleased.md"
+
+          git config user.email "agim-18@hotmail.com"
+          git config user.name "Release Bot"
+
+          git add --all
+          git commit -m "Release version $VERSION"
+          git push origin HEAD:main
