@@ -9,10 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       short_sha: ${{ steps.sha.outputs.short_sha }}
+      rc_version: ${{ steps.rc_version.outputs.rc_version }}
     steps:
       - uses: actions/checkout@v4
       - id: sha
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - id: rc_version
+        run: echo "rc_version=1.2.0-dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
   rc-build:
     needs: get-sha
@@ -32,4 +35,13 @@ jobs:
       version: 1.2.0-dev-
       remote: conan-rc
       git_sha: ${{ needs.get-sha.outputs.short_sha }}
+    secrets: inherit
+
+  release:
+    needs: [consumer-verify, get-sha]
+    if: github.event.label.name == 'publish'
+    uses: agim89/shared-workflows/.github/workflows/release.yml@main
+    with:
+      version: 1.2.0
+      rc_version: ${{ needs.get-sha.outputs.rc_version }}
     secrets: inherit
