@@ -62,6 +62,10 @@ jobs:
             exit 0
           fi
 
+          # Configure git BEFORE bump2version tries to commit
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+
           echo "Releasing a $RELEASE_TYPE version"
           bump2version "$RELEASE_TYPE" --config-file setup.cpg --allow-dirty
           
@@ -102,9 +106,7 @@ jobs:
           # Clear unreleased.md
           : > "$RELEASE_LOGS_FOLDER/unreleased.md"
 
-          git config user.email "agim-18@hotmail.com"
-          git config user.name "Release Bot"
-
-          git add --all
-          git commit -m "Release version $VERSION"
+          # Commit release notes changes (bump2version already committed version changes)
+          git add "$RELEASE_FILE" "$RELEASE_LOGS_FOLDER/unreleased.md"
+          git commit -m "Update release notes for $VERSION" || echo "No additional changes to commit"
           git push origin HEAD:main
