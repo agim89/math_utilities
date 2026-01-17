@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
   release-notes-on-merge:
     if: ${{ github.event.pull_request.merged == true }}
@@ -35,13 +35,17 @@ jobs:
         id: release_type
         run: |
           LABELS='${{ toJson(github.event.pull_request.labels) }}'
+          echo "PR Labels: $LABELS"
 
-          if echo "$LABELS" | grep -q "name:major"; then
+          if echo "$LABELS" | grep -q '"name":"major"'; then
             echo "type=major" >> $GITHUB_OUTPUT
-          elif echo "$LABELS" | grep -q "name:minor"; then
+            echo "Detected: major release"
+          elif echo "$LABELS" | grep -q '"name":"minor"'; then
             echo "type=minor" >> $GITHUB_OUTPUT
+            echo "Detected: minor release"
           else
             echo "type=patch" >> $GITHUB_OUTPUT
+            echo "Detected: patch release (default)"
           fi
 
       - name: Release new version
@@ -61,18 +65,34 @@ jobs:
           echo "Releasing a $RELEASE_TYPE version"
           bump2version "$RELEASE_TYPE"
 
+          # Get the new version after bump
           VERSION=$(awk -F\" '/=.*/ {print $2}' "$RELEASE_LOGS_FOLDER/__version__.py")
           MINOR_VERSION="${VERSION%.*}"
 
-          TMP_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md.tmp"
-          FINAL_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md"
+          # Create Release file for the NEW version (e.g., Release-1.4.md)
+          RELEASE_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md"
 
-          echo -e "## $VERSION\n" > "$TMP_FILE"
+          echo "New version: $VERSION"
+          echo "Release file: $RELEASE_FILE"
+
+          # Create or append to the release file
+          if [ ! -f "$RELEASE_FILE" ]; then
+            echo "Creating new release file: $RELEASE_FILE"
+            echo "# Release Notes - Version $MINOR_VERSION.x" > "$RELEASE_FILE"
+            echo "" >> "$RELEASE_FILE"
+          fi
+
+          # Prepend the new version and content from unreleased.md
+          TMP_FILE="$RELEASE_FILE.tmp"
+          echo "## $VERSION" > "$TMP_FILE"
+          echo "" >> "$TMP_FILE"
           cat "$RELEASE_LOGS_FOLDER/unreleased.md" >> "$TMP_FILE"
-          echo -e "\n" >> "$TMP_FILE"
-          cat "$FINAL_FILE" >> "$TMP_FILE" || true
-          mv "$TMP_FILE" "$FINAL_FILE"
+          echo "" >> "$TMP_FILE"
+          echo "" >> "$TMP_FILE"
+          cat "$RELEASE_FILE" >> "$TMP_FILE" || true
+          mv "$TMP_FILE" "$RELEASE_FILE"
 
+          # Clear unreleased.md
           : > "$RELEASE_LOGS_FOLDER/unreleased.md"
 
           git config user.email "agim-18@hotmail.com"
