@@ -63,10 +63,17 @@ jobs:
           fi
 
           echo "Releasing a $RELEASE_TYPE version"
-          bump2version "$RELEASE_TYPE"
+          bump2version "$RELEASE_TYPE" --config-file setup.cpg --allow-dirty
+          
+          # Verify bump2version worked
+          echo "Checking updated files:"
+          cat Release-Notes/__version__.py
+          cat VERSION
+          cat setup.cpg | grep current_version
 
           # Get the new version after bump
-          VERSION=$(awk -F\" '/=.*/ {print $2}' "$RELEASE_LOGS_FOLDER/__version__.py")
+          VERSION=$(cat Release-Notes/__version__.py | grep -oP '(?<=")\d+\.\d+\.\d+(?=")')
+          echo "Updated version: $VERSION"
           MINOR_VERSION="${VERSION%.*}"
 
           # Create Release file for the NEW version (e.g., Release-1.4.md)
