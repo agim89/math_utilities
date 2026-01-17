@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [labeled]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   get-sha:
     runs-on: ubuntu-latest
