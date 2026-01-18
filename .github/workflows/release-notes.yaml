@@ -2,17 +2,15 @@ name: Release Notes
 
 on:
   pull_request:
-    types:
-      - closed
-    branches:
-      - main
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   release-notes-on-merge:
-    if: ${{ github.event.pull_request.merged == true }}
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -27,74 +25,62 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install Dependencies
+      - name: Install bump2version
         run: pip install bump2version
 
-      # 🔹 NEW: Determine release type from PR labels
-      - name: Determine release type
+      - name: Determine release type from PR labels
         id: release_type
         run: |
           LABELS='${{ toJson(github.event.pull_request.labels) }}'
-          echo "PR Labels: $LABELS"
-
+          
           if echo "$LABELS" | grep -q '"name":"major"'; then
             echo "type=major" >> $GITHUB_OUTPUT
-            echo "Detected: major release"
           elif echo "$LABELS" | grep -q '"name":"minor"'; then
             echo "type=minor" >> $GITHUB_OUTPUT
-            echo "Detected: minor release"
           else
             echo "type=patch" >> $GITHUB_OUTPUT
-            echo "Detected: patch release (default)"
           fi
+          
+          echo "Release type: ${{ steps.release_type.outputs.type }}"
 
-      - name: Release new version
+      - name: Bump version and create release notes
         env:
-          RELEASE_LOGS_FOLDER: Release-Notes
           RELEASE_TYPE: ${{ steps.release_type.outputs.type }}
         run: |
           set -e
-
-          RELEASE_FILE_NAME_PREFIX="Release"
-
-          if [ ! -s "$RELEASE_LOGS_FOLDER/unreleased.md" ]; then
-            echo "unreleased.md is empty. Skipping release."
+          
+          # Exit early if no unreleased changes
+          if [ ! -s "Release-Notes/unreleased.md" ]; then
+            echo "No unreleased changes found. Skipping release."
             exit 0
           fi
 
-          # Configure git BEFORE bump2version tries to commit
+          # Configure git for bump2version commits
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
 
-          echo "Releasing a $RELEASE_TYPE version"
+          # Bump version in all configured files
+          echo "Bumping $RELEASE_TYPE version..."
           bump2version "$RELEASE_TYPE" --config-file setup.cpg --allow-dirty
+
+          # Extract new version
+          NEW_VERSION=$(grep -oP '(?<=__version__ = ")[^"]+' Release-Notes/__version__.py)
+          echo "New version: $NEW_VERSION"
+
+          # Create release notes file
+          RELEASE_FILE="Release-Notes/Release-$NEW_VERSION.md"
+          echo "Creating $RELEASE_FILE"
           
-          # Verify bump2version worked
-          echo "Checking updated files:"
-          cat Release-Notes/__version__.py
-          cat VERSION
-          cat setup.cpg | grep current_version
+          {
+            echo "# Release $NEW_VERSION"
+            echo ""
+            cat Release-Notes/unreleased.md
+          } > "$RELEASE_FILE"
 
-          # Get the new version after bump
-          VERSION=$(cat Release-Notes/__version__.py | grep -oP '(?<=")\d+\.\d+\.\d+(?=")')
-          echo "Updated version: $VERSION"
+          # Clear unreleased notes
+          > Release-Notes/unreleased.md
 
-          # Create Release file for the FULL version (e.g., Release-1.3.1.md, Release-1.3.2.md)
-          RELEASE_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$VERSION.md"
-
-          echo "New version: $VERSION"
-          echo "Release file: $RELEASE_FILE"
-
-          # Create new release file with content from unreleased.md
-          echo "Creating new release file: $RELEASE_FILE"
-          echo "# Release $VERSION" > "$RELEASE_FILE"
-          echo "" >> "$RELEASE_FILE"
-          cat "$RELEASE_LOGS_FOLDER/unreleased.md" >> "$RELEASE_FILE"
-
-          # Clear unreleased.md
-          : > "$RELEASE_LOGS_FOLDER/unreleased.md"
-
-          # Commit release notes changes (bump2version already committed version changes)
-          git add "$RELEASE_FILE" "$RELEASE_LOGS_FOLDER/unreleased.md"
-          git commit -m "Update release notes for $VERSION" || echo "No additional changes to commit"
+          # Commit and push release notes
+          git add "$RELEASE_FILE" Release-Notes/unreleased.md
+          git commit -m "docs: Add release notes for $NEW_VERSION" || true
           git push origin HEAD:main
