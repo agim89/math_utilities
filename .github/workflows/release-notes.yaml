@@ -50,18 +50,12 @@ jobs:
           RELEASE_TYPE: ${{ steps.release_type.outputs.type }}
         run: |
           set -e
-          
-          # Exit early if no unreleased changes
-          if [ ! -s "Release-Notes/unreleased.md" ]; then
-            echo "No unreleased changes found. Skipping release."
-            exit 0
-          fi
 
           # Configure git for bump2version commits
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
 
-          # Bump version in all configured files
+          # Always bump version on merge
           echo "Bumping $RELEASE_TYPE version..."
           bump2version "$RELEASE_TYPE" --config-file setup.cpg --allow-dirty
 
@@ -69,20 +63,26 @@ jobs:
           NEW_VERSION=$(grep -oP '(?<=__version__ = ")[^"]+' Release-Notes/__version__.py)
           echo "New version: $NEW_VERSION"
 
-          # Create release notes file
-          RELEASE_FILE="Release-Notes/Release-$NEW_VERSION.md"
-          echo "Creating $RELEASE_FILE"
-          
-          {
-            echo "# Release $NEW_VERSION"
-            echo ""
-            cat Release-Notes/unreleased.md
-          } > "$RELEASE_FILE"
+          # Only create release notes file if unreleased.md has content
+          if [ -s "Release-Notes/unreleased.md" ]; then
+            RELEASE_FILE="Release-Notes/Release-$NEW_VERSION.md"
+            echo "Creating release notes: $RELEASE_FILE"
+            
+            {
+              echo "# Release $NEW_VERSION"
+              echo ""
+              cat Release-Notes/unreleased.md
+            } > "$RELEASE_FILE"
 
-          # Clear unreleased notes
-          > Release-Notes/unreleased.md
+            # Clear unreleased notes
+            > Release-Notes/unreleased.md
 
-          # Commit and push release notes
-          git add "$RELEASE_FILE" Release-Notes/unreleased.md
-          git commit -m "docs: Add release notes for $NEW_VERSION" || true
+            # Commit release notes changes
+            git add "$RELEASE_FILE" Release-Notes/unreleased.md
+            git commit -m "docs: Add release notes for $NEW_VERSION" || true
+          else
+            echo "No unreleased changes to document"
+          fi
+
+          # Push all version bump commits
           git push origin HEAD:main
