@@ -78,30 +78,18 @@ jobs:
           # Get the new version after bump
           VERSION=$(cat Release-Notes/__version__.py | grep -oP '(?<=")\d+\.\d+\.\d+(?=")')
           echo "Updated version: $VERSION"
-          MINOR_VERSION="${VERSION%.*}"
 
-          # Create Release file for the NEW version (e.g., Release-1.4.md)
-          RELEASE_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$MINOR_VERSION.md"
+          # Create Release file for the FULL version (e.g., Release-1.3.1.md, Release-1.3.2.md)
+          RELEASE_FILE="$RELEASE_LOGS_FOLDER/$RELEASE_FILE_NAME_PREFIX-$VERSION.md"
 
           echo "New version: $VERSION"
           echo "Release file: $RELEASE_FILE"
 
-          # Create or append to the release file
-          if [ ! -f "$RELEASE_FILE" ]; then
-            echo "Creating new release file: $RELEASE_FILE"
-            echo "# Release Notes - Version $MINOR_VERSION.x" > "$RELEASE_FILE"
-            echo "" >> "$RELEASE_FILE"
-          fi
-
-          # Prepend the new version and content from unreleased.md
-          TMP_FILE="$RELEASE_FILE.tmp"
-          echo "## $VERSION" > "$TMP_FILE"
-          echo "" >> "$TMP_FILE"
-          cat "$RELEASE_LOGS_FOLDER/unreleased.md" >> "$TMP_FILE"
-          echo "" >> "$TMP_FILE"
-          echo "" >> "$TMP_FILE"
-          cat "$RELEASE_FILE" >> "$TMP_FILE" || true
-          mv "$TMP_FILE" "$RELEASE_FILE"
+          # Create new release file with content from unreleased.md
+          echo "Creating new release file: $RELEASE_FILE"
+          echo "# Release $VERSION" > "$RELEASE_FILE"
+          echo "" >> "$RELEASE_FILE"
+          cat "$RELEASE_LOGS_FOLDER/unreleased.md" >> "$RELEASE_FILE"
 
           # Clear unreleased.md
           : > "$RELEASE_LOGS_FOLDER/unreleased.md"
