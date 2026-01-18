@@ -20,69 +20,35 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Install bump2version
-        run: pip install bump2version
-
-      - name: Determine release type from PR labels
-        id: release_type
-        run: |
-          LABELS='${{ toJson(github.event.pull_request.labels) }}'
-          
-          # Extract label names using jq for reliable JSON parsing
-          if echo "$LABELS" | jq -r '.[].name' | grep -q "^major$"; then
-            echo "type=major" >> $GITHUB_OUTPUT
-            echo "Detected release type: major"
-          elif echo "$LABELS" | jq -r '.[].name' | grep -q "^minor$"; then
-            echo "type=minor" >> $GITHUB_OUTPUT
-            echo "Detected release type: minor"
-          else
-            echo "type=patch" >> $GITHUB_OUTPUT
-            echo "Detected release type: patch (default)"
-          fi
-
-      - name: Bump version and create release notes
-        env:
-          RELEASE_TYPE: ${{ steps.release_type.outputs.type }}
+      - name: Create release notes file
         run: |
           set -e
-
-          # Configure git for bump2version commits
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
-
-          # Always bump version on merge
-          echo "Bumping $RELEASE_TYPE version..."
-          bump2version "$RELEASE_TYPE" --config-file setup.cpg --allow-dirty
-
-          # Extract new version
-          NEW_VERSION=$(grep -oP '(?<=__version__ = ")[^"]+' Release-Notes/__version__.py)
-          echo "New version: $NEW_VERSION"
-
-          # Only create release notes file if unreleased.md has content
-          if [ -s "Release-Notes/unreleased.md" ]; then
-            RELEASE_FILE="Release-Notes/Release-$NEW_VERSION.md"
-            echo "Creating release notes: $RELEASE_FILE"
-            
-            {
-              echo "# Release $NEW_VERSION"
-              echo ""
-              cat Release-Notes/unreleased.md
-            } > "$RELEASE_FILE"
-
-            # Clear unreleased notes
-            > Release-Notes/unreleased.md
-
-            # Commit release notes changes
-            git add "$RELEASE_FILE" Release-Notes/unreleased.md
-            git commit -m "docs: Add release notes for $NEW_VERSION" || true
-          else
-            echo "No unreleased changes to document"
+          
+          # Exit if no unreleased changes
+          if [ ! -s "Release-Notes/unreleased.md" ]; then
+            echo "No unreleased changes to document. Skipping."
+            exit 0
           fi
 
-          # Push all version bump commits
+          # Get current version from VERSION file
+          VERSION=$(cat VERSION)
+          RELEASE_FILE="Release-Notes/Release-$VERSION.md"
+          
+          echo "Creating release notes for version $VERSION: $RELEASE_FILE"
+          
+          {
+            echo "# Release $VERSION"
+            echo ""
+            cat Release-Notes/unreleased.md
+          } > "$RELEASE_FILE"
+
+          # Clear unreleased notes
+          > Release-Notes/unreleased.md
+
+          # Configure git and commit
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add "$RELEASE_FILE" Release-Notes/unreleased.md
+          git commit -m "docs: Add release notes for $VERSION"
           git push origin HEAD:main
+        shell: bash
