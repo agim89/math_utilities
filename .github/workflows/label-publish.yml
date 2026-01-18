@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   get-sha:
-    if: github.event.label.name == 'publish' && github.event.pull_request.state == 'open'
+    if: |
+      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     outputs:
       short_sha: ${{ steps.sha.outputs.short_sha }}
@@ -27,7 +29,9 @@ jobs:
 
   rc-build:
     needs: get-sha
-    if: github.event.label.name == 'publish' && github.event.pull_request.state == 'open'
+    if: |
+      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.pull_request.state == 'open'
     uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
     with:
       version: ${{ needs.get-sha.outputs.version }}-dev-
@@ -37,7 +41,9 @@ jobs:
 
   consumer-verify:
     needs: [rc-build, get-sha]
-    if: github.event.label.name == 'publish' && github.event.pull_request.state == 'open'
+    if: |
+      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.pull_request.state == 'open'
     uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
     with:
       version: ${{ needs.get-sha.outputs.version }}-dev-
