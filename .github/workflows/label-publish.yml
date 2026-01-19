@@ -50,5 +50,3 @@ jobs:
       remote: conan-rc
       is_rc: true
     secrets: inherit
-      git_sha: ${{ needs.get-sha.outputs.short_sha }}
-    secrets: inherit
