@@ -38,15 +38,3 @@ jobs:
       remote: conan-rc
       is_rc: true
     secrets: inherit
-
-  consumer-verify:
-    needs: [rc-build, get-sha]
-    if: |
-      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
-      github.event.pull_request.state == 'open'
-    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
-    with:
-      version: ${{ needs.get-sha.outputs.version }}-dev-
-      remote: conan-rc
-      git_sha: ${{ needs.get-sha.outputs.short_sha }}
-    secrets: inherit
