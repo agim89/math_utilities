@@ -38,12 +38,18 @@ jobs:
               echo "should_release=false" >> $GITHUB_OUTPUT
             fi
           else
-            # Fallback: check if current branch/commit has publish label by looking at previous tags or releases
-            # For now, assume any push to main with version change should release
-            # Check if VERSION file changed in last commit
-            if git diff HEAD~1 HEAD --name-only | grep -q "^VERSION$"; then
-              echo "VERSION file changed, assuming publish intent"
-              echo "should_release=true" >> $GITHUB_OUTPUT
+            # Fallback: check if VERSION file exists and differs from previous version
+            # This detects version bumps that indicate a release intent
+            if [ -f "VERSION" ]; then
+              CURRENT_VERSION=$(cat VERSION)
+              # Try to find if this version exists in git history (tagged)
+              if git describe --tags --match "v${CURRENT_VERSION}" 2>/dev/null; then
+                echo "Version $CURRENT_VERSION already released, skip"
+                echo "should_release=false" >> $GITHUB_OUTPUT
+              else
+                echo "Version $CURRENT_VERSION is new, triggering release"
+                echo "should_release=true" >> $GITHUB_OUTPUT
+              fi
             else
               echo "should_release=false" >> $GITHUB_OUTPUT
             fi
