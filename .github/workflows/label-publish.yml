@@ -11,7 +11,7 @@ permissions:
 jobs:
   get-sha:
     if: |
-      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.label.name == 'publish' &&
       github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     outputs:
@@ -52,14 +52,3 @@ jobs:
       git_sha: ${{ needs.get-sha.outputs.short_sha }}
     secrets: inherit
 
-  integration-test-verify:
-    needs: get-sha
-    if: |
-      github.event.label.name == 'verify' && 
-      github.event.pull_request.state == 'open'
-    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
-    with:
-      version: ${{ needs.get-sha.outputs.version }}-dev-
-      remote: conan-rc
-      git_sha: ${{ needs.get-sha.outputs.short_sha }}
-    secrets: inherit

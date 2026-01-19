@@ -1,0 +1,33 @@
+name: Verify RC Package
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  get-sha:
+    if: github.event.label.name == 'verify' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      short_sha: ${{ steps.sha.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+      - id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+  integration-test:
+    needs: get-sha
+    if: github.event.label.name == 'verify' && github.event.pull_request.state == 'open'
+    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
+    with:
+      version: ${{ needs.get-sha.outputs.version }}-dev-
+      remote: conan-rc
+      git_sha: ${{ needs.get-sha.outputs.short_sha }}
+    secrets: inherit
