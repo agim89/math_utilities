@@ -30,9 +30,9 @@ jobs:
             "required_status_checks": {
               "strict": true,
               "checks": [
-                {"context": "Build and Test (ubuntu-latest)"},
-                {"context": "Build and Test (macos-latest)"},
-                {"context": "Build and Test (windows-latest)"}
+                {"context": "verify / Build and Test (ubuntu-latest)"},
+                {"context": "verify / Build and Test (macos-latest)"},
+                {"context": "verify / Build and Test (windows-latest)"}
               ]
             },
             "enforce_admins": false,
