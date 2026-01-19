@@ -19,7 +19,13 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          token: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
+
+      - name: Configure git authentication
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git remote set-url origin "https://x-access-token:${{ secrets.BRANCH_PROTECTION_TOKEN }}@github.com/${{ github.repository }}.git"
+        shell: bash
 
       - name: Create release notes file
         run: |
@@ -46,12 +52,8 @@ jobs:
           # Clear unreleased notes
           > Release-Notes/unreleased.md
 
-          # Configure git and commit
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
+          # Commit and push
           git add "$RELEASE_FILE" Release-Notes/unreleased.md
           git commit -m "docs: Add release notes for $VERSION"
           git push origin HEAD:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
         shell: bash
