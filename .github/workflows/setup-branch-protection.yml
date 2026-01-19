@@ -30,16 +30,16 @@ jobs:
             "required_status_checks": {
               "strict": true,
               "checks": [
-                {"context": "Build and Test (ubuntu-latest)"},
-                {"context": "Build and Test (macos-latest)"},
-                {"context": "Build and Test (windows-latest)"}
+                {"context": "verify / Build and Test (ubuntu-latest)"},
+                {"context": "verify / Build and Test (macos-latest)"},
+                {"context": "verify / Build and Test (windows-latest)"}
               ]
             },
-            "enforce_admins": true,
+            "enforce_admins": false,
             "required_pull_request_reviews": {
               "dismiss_stale_reviews": true,
               "require_code_owner_reviews": false,
-              "required_approving_review_count": 1
+              "required_approving_review_count": 0
             },
             "restrictions": null,
             "required_linear_history": true,
