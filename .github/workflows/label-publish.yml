@@ -30,7 +30,7 @@ jobs:
   integration-test:
     needs: get-sha
     if: |
-      (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.label.name == 'verify' && 
       github.event.pull_request.state == 'open'
     uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
     with:
@@ -40,7 +40,7 @@ jobs:
     secrets: inherit
 
   rc-build:
-    needs: [get-sha, integration-test]
+    needs: get-sha
     if: |
       github.event.label.name == 'publish' && 
       github.event.pull_request.state == 'open'
