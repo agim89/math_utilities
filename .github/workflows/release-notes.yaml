@@ -18,7 +18,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
+          token: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
 
       - name: Create release notes file
         run: |
@@ -51,4 +52,6 @@ jobs:
           git add "$RELEASE_FILE" Release-Notes/unreleased.md
           git commit -m "docs: Add release notes for $VERSION"
           git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
         shell: bash
