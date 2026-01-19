@@ -54,7 +54,7 @@ jobs:
           
           echo "✓ Branch protection configured successfully"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
 
       - name: Verify branch protection
         run: |
@@ -63,4 +63,4 @@ jobs:
             --jq '{strict_checks: .required_status_checks.strict, required_checks: .required_status_checks.checks, enforce_admins: .enforce_admins, allow_force_pushes: .allow_force_pushes, required_reviews: .required_pull_request_reviews.required_approving_review_count}'
           echo "✓ Protection rules verified"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
