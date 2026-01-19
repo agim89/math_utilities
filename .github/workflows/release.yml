@@ -22,6 +22,7 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B)
           
           # Extract PR number from commit message (GitHub creates: "Merge pull request #123 from...")
+          # OR check HEAD~1..HEAD for PR info in case of local merge
           if [[ $COMMIT_MSG =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
             PR_NUMBER="${BASH_REMATCH[1]}"
             echo "Merged PR: #${PR_NUMBER}"
@@ -37,7 +38,15 @@ jobs:
               echo "should_release=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "should_release=false" >> $GITHUB_OUTPUT
+            # Fallback: check if current branch/commit has publish label by looking at previous tags or releases
+            # For now, assume any push to main with version change should release
+            # Check if VERSION file changed in last commit
+            if git diff HEAD~1 HEAD --name-only | grep -q "^VERSION$"; then
+              echo "VERSION file changed, assuming publish intent"
+              echo "should_release=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_release=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
   get-version:
