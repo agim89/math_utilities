@@ -1,12 +1,14 @@
 name: Final Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
 
 jobs:
   # Only trigger if the merged PR had the 'publish' label
   check-publish-label:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
