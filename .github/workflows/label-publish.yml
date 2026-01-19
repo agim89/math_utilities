@@ -27,14 +27,28 @@ jobs:
       - id: rc_version
         run: echo "rc_version=$(cat VERSION)-dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-  rc-build:
+  integration-test:
     needs: get-sha
     if: |
       (github.event.label.name == 'publish' || github.event.label.name == 'verify') && 
+      github.event.pull_request.state == 'open'
+    uses: agim89/shared-workflows/.github/workflows/consumer-verify.yml@main
+    with:
+      version: ${{ needs.get-sha.outputs.version }}-dev-
+      remote: conan-rc
+      git_sha: ${{ needs.get-sha.outputs.short_sha }}
+    secrets: inherit
+
+  rc-build:
+    needs: [get-sha, integration-test]
+    if: |
+      github.event.label.name == 'publish' && 
       github.event.pull_request.state == 'open'
     uses: agim89/shared-workflows/.github/workflows/conan-package.yml@main
     with:
       version: ${{ needs.get-sha.outputs.version }}-dev-
       remote: conan-rc
       is_rc: true
+    secrets: inherit
+      git_sha: ${{ needs.get-sha.outputs.short_sha }}
     secrets: inherit
