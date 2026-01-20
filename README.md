@@ -14,7 +14,7 @@ Short guide to the pipeline, labels, and release flow.
 2) Version bump guard (on label add)
 - File: `math_utilities/.github/workflows/validate-version.yml`
 - Triggers when `publish` or `verify` label is added
-- Requires `VERSION` to change, enforces semver, and ensures version > base branch.
+- Requires `VERSION` to change, enforces semantic version, and ensures version > base branch.
 
 3) Label-driven RC flows
 - `publish` (file: `label-publish.yml`)
@@ -33,10 +33,10 @@ Short guide to the pipeline, labels, and release flow.
    - Create tag `vX.Y.Z` and GitHub Release
 - If the tag already exists, the workflow fails (no re-release).
 
-5) Release notes (after merge)
+5) Release notes (after merge) this wasn't required implemented because of versioning
 - File: `math_utilities/.github/workflows/release-notes.yaml`
 - On PR merge to main, writes `Release-Notes/Release-X.Y.Z.md` from `unreleased.md` and pushes
-- Because Final Release triggers on PR close (not push)
+- unrelease.md empty fo new release version
 
 6) Branch protection (manual)
 - File: `math_utilities/.github/workflows/setup-branch-protection.yml`
@@ -48,8 +48,8 @@ Short guide to the pipeline, labels, and release flow.
 
 | Label | What happens | Builds RC | Tests RC | Releases on merge |
 |-------|---------------|-----------|----------|-------------------|
-| verify | Integration test existing RC from `conan-rc` | ❌ | ✅ (remote) | ❌ |
-| publish | Build + upload RC to `conan-rc`, then test from remote | ✅ | ✅ | ✅ (Final Release on merge) |
+| verify | Integration test existing RC from `conan-rc` |No| Yes (remote) | No |
+| publish | Build + upload RC to `conan-rc`, then test from remote | Yes | Yes | Yes (Final Release on merge) |
 
 Notes:
 - Add only one of the labels. `publish` implies release intent after merge; `verify` is for test-only.
@@ -60,16 +60,17 @@ Notes:
 ## Versioning and remotes
 - RC packages: `mylib/X.Y.Z-dev-<short-sha>` → `conan-rc`
 - Release packages: `mylib/X.Y.Z` → `conan-stable`
-- Semver stored in `VERSION` (single source of truth).
+- Semantic version stored in `VERSION` (single source of truth).
 
 ---
 
-## How to cut a release
-1) Bump `VERSION` and update `Release-Notes/unreleased.md`, open PR.
-2) Add label `publish` (triggers version guard, RC build, upload, and RC integration test).
-3) Wait for RC workflow to pass, then merge PR.
-4) Final Release auto-runs on PR merge: builds clean release, uploads to `conan-stable`, tags `vX.Y.Z`, creates GitHub Release.
-5) Release-notes workflow commits `Release-Notes/Release-X.Y.Z.md` to main (will not re-trigger release).
+## How to release (majot, minor, patch) version
+1) Bump `VERSION` in (VERSION file), make changes and update `Release-Notes/unreleased.md`
+2) Commit changes, open PR.
+3) Add label `publish` (triggers version guard, RC build, upload, and RC integration test).
+4) Wait for RC workflow to pass, then merge PR.
+5) Final Release auto-runs on PR merge: builds clean release, uploads to `conan-stable`, tags `vX.Y.Z`, creates GitHub Release.
+6) Release-notes workflow commits `Release-Notes/Release-X.Y.Z.md` to main (will not re-trigger release).
 
 ---
 
@@ -85,9 +86,3 @@ Notes:
 - `CONAN_RC_URL`, `CONAN_STABLE_URL`, `CONAN_USERNAME`, `CONAN_PASSWORD`
 - `BRANCH_PROTECTION_TOKEN` (for branch protection and release-notes push)
 
----
-
-## Troubleshooting quick hits
-- Tag push rejected: tag already exists → delete remote tag manually (`git push origin :refs/tags/vX.Y.Z`) then rerun release.
-- RC not found in verify: ensure a `publish` run built/uploaded the matching `-dev-<sha>` package.
-- Version guard failing: bump `VERSION` and keep semver format `X.Y.Z`.
